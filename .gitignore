@@ -1,0 +1,45 @@
+# Node dependencies and generated builds
+node_modules/
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Test reports
+coverage/
+htmlcov/
+.coverage
+.coverage.*
+
+# Local environment settings (keep example files)
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.local
+
+# Logs
+logs/
+*.log
+
+# Editor and operating system files
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
