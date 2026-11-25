@@ -17,7 +17,19 @@ backend/
   app/main.py             FastAPI application and endpoints
   requirements.txt        Pinned Python dependencies
 .gitignore                Ignore rules for local and generated files
+AGENTS.md                 Project guidance for Codex
+docs/PLAN.md              Scope, decisions, milestones, and progress
 ```
+
+## Working with Codex
+
+Open the repository root in VS Code so both the frontend and backend are available. [AGENTS.md](AGENTS.md) defines coding conventions, including simple, clean code, and verification expectations. [The implementation plan](docs/PLAN.md) tracks scope, open decisions, and milestones.
+
+Start with one focused task, for example:
+
+> Read AGENTS.md, README.md, and docs/PLAN.md. Implement milestone 1: connect React to the sample albums API through a Vite proxy, with loading, empty, and error states. Run the relevant checks and update the plan with the result.
+
+Review the changes and create a Git checkpoint after each working milestone.
 
 ## Prerequisites
 
