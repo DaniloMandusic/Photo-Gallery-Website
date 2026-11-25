@@ -9,8 +9,10 @@ A photography portfolio with an owner-only CMS. The owner should be able to open
 - Complete: React/TypeScript/Vite scaffold and placeholder homepage.
 - Complete: FastAPI health endpoint and sample albums endpoint.
 - Complete: dependency files, Git ignore rules, setup documentation, and project guidance.
-- Not implemented: frontend API connection, persistent data, authentication, uploads, CMS, or public gallery.
-- Current milestone: connect the frontend to the sample albums API (milestone 1).
+- Implemented: local frontend gallery demo with eight static photos, responsive grid, native fullscreen dialog, wrapping navigation, keyboard/focus/scroll handling, and image loading/failure/empty states.
+- Not implemented: frontend API connection, persistent data, authentication, uploads, CMS, or production public gallery with albums.
+- Current milestone: frontend-only gallery demo implementation complete; manual browser acceptance checks pending. See [the demo plan](../plans/frontend-gallery-demo.md).
+- The frontend API connection (milestone 1 below) is deferred until after the demo.
 
 ## MVP scope
 
@@ -35,9 +37,10 @@ Confirmed:
 - React, TypeScript, Vite, plain CSS, and FastAPI in one repository.
 - Store image files separately from database metadata.
 - Protect editing operations and draft media on the backend.
+- For the local frontend demo only: store copied JPEGs in `frontend/public/photos/` and load them from an ordered static TypeScript array. No backend or database is required for this milestone; production storage remains undecided.
 
 Proposed starting point:
-- An album-cover homepage linking to individual project galleries. Confirm this layout before visual implementation.
+- The initial demo opens directly to a photo gallery with a simple fullscreen viewer. Album/project navigation remains future scope.
 - An owner-only /admin area in the existing frontend.
 
 Still to decide:
@@ -108,3 +111,15 @@ Record decisions here as they are made; do not treat proposals as implemented fe
 ## Progress updates
 
 When a milestone is completed, update its status and record verification results and any unresolved limitations here. Keep README.md aligned with the actual setup and available commands.
+
+### 2026-11-25 — Local frontend gallery demo
+
+Implemented the ordered typed photo array, proportion-preserving three/two/one-column grid, compact neutral header, and fullscreen viewer. The viewer uses a native modal dialog, explicit Tab cycling, Left/Right navigation with wrapping, Escape/Close, focus return, and background scroll restoration. Images reserve intrinsic space, load eagerly for the first three entries and lazily thereafter, and provide load-error text. An empty array has a dedicated message. No animations or dependencies were added; the backend remains unchanged.
+
+Verification: `npm.cmd run lint` and `npm.cmd run build` passed after correcting a source encoding issue. All eight packaged JPEGs match the supplied assets. Browser access failed because the computer-use native pipe is unavailable. Desktop/375px mobile rendering, touch, keyboard/focus/scroll behavior, and runtime empty/broken-image/loading checks remain unverified. API milestone 1 remains deferred; this demo does not complete the production gallery milestone 6.
+
+### 2026-11-25 - Landscape portfolio refinement
+
+Per user direction, the local demo now uses a black background, light typography, two columns (one on phones), and consistent 3:2 landscape frames. Images fit without cropping or distortion. Existing horizontal photos lead the static array. Fullscreen viewing retains original proportions. Lint/build passed; browser rendering remains unverified. This supersedes the initial white, variable-height grid design.
+
+Header update (2026-11-25): the portfolio header and browser title now use Mihajlo Mandušić. Right-aligned contact links open the supplied Instagram profile and a new email to mixoidm@gmail.com; links wrap on small screens and include visible keyboard focus. Frontend lint/build passed; browser rendering remains unverified.

@@ -2,7 +2,19 @@
 
 A photography portfolio built with React, TypeScript, and Vite on the frontend, and FastAPI on the backend.
 
-The project currently contains a placeholder homepage and a sample albums API. The photo grid, image viewer, uploads, and persistent storage have not been implemented yet. The frontend is not yet connected to the API.
+The homepage is a local frontend gallery demo with eight photographs, a responsive grid, and a fullscreen viewer. The sample albums API remains separate; API integration, uploads, CMS, and persistent storage are not implemented.
+
+Demo photos live in `frontend/public/photos/`; their display and navigation order comes from `frontend/src/data/photos.ts`. See [the demo plan](plans/frontend-gallery-demo.md) for behavior and verification. Only the Vite frontend server is needed for this demo.
+
+## Gallery demo
+
+The black portfolio uses two generous columns, switching to one at 600px and below. Every gallery frame is 3:2 landscape; images fit inside without cropping or distortion, with dark space around other aspect ratios. Horizontal demo photos lead the ordered collection. The fullscreen viewer shows the complete image. Open a photo with a click, Enter, or Space. The fullscreen viewer provides Previous/Next buttons and Left/Right arrow navigation, wrapping at either end. Close with Escape or Close. The dialog contains keyboard focus, returns focus to the selected photo, and locks/restores background scrolling.
+
+Fixed 3:2 frames reserve space while loading; the first two images load eagerly and later images load lazily. Failed images show a readable fallback in both the grid and viewer. An empty array displays an empty-gallery message. No animation is used, including for users who prefer reduced motion.
+
+To add a demo photo, copy a JPEG into `frontend/public/photos/` and add its `/photos/filename.jpg` URL, descriptive alt text, and actual width/height to the typed array. Reorder array entries to change gallery order. These static assets are public: this demo has no drafts or private media handling.
+
+Verification (2026-11-25): frontend lint and production build passed. All eight build-output JPEGs match the supplied files. Browser automation was unavailable (native pipe connection failed), so desktop/mobile rendering, keyboard/focus/scroll behavior, and interactive loading/failure/empty-state checks still need manual verification.
 
 ## Project structure
 
@@ -25,9 +37,9 @@ docs/PLAN.md              Scope, decisions, milestones, and progress
 
 Open the repository root in VS Code so both the frontend and backend are available. [AGENTS.md](AGENTS.md) defines coding conventions, including simple, clean code, and verification expectations. [The implementation plan](docs/PLAN.md) tracks scope, open decisions, and milestones.
 
-Start with one focused task, for example:
+Continue with one focused task after reviewing current progress:
 
-> Read AGENTS.md, README.md, and docs/PLAN.md. Implement milestone 1: connect React to the sample albums API through a Vite proxy, with loading, empty, and error states. Run the relevant checks and update the plan with the result.
+> Read AGENTS.md, README.md, docs/PLAN.md, and plans/frontend-gallery-demo.md. Complete the remaining manual browser checks for the gallery demo and record the results before starting another milestone.
 
 Review the changes and create a Git checkpoint after each working milestone.
 
@@ -100,3 +112,5 @@ The Vite API proxy is not configured yet. Before fetching `/api/albums` from Rea
 ## Version control
 
 Commit source code, configuration, `frontend/package-lock.json`, and `backend/requirements.txt`. Dependencies, virtual environments, build output, caches, logs, and local `.env` files are ignored. Use `.env.example` for documented example settings without secrets.
+
+Header update (2026-11-25): the portfolio header and browser title now use Mihajlo Mandušić. Right-aligned contact links open the supplied Instagram profile and a new email to mixoidm@gmail.com; links wrap on small screens and include visible keyboard focus. Frontend lint/build passed; browser rendering remains unverified.
