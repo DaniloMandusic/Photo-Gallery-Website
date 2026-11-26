@@ -92,8 +92,19 @@ export default function App() {
       <header className="site-header">
         <h1>Mihajlo Mandušić</h1>
         <nav className="contact-links" aria-label="Contact">
-          <a href="https://www.instagram.com/mihajlo.mandusic/">Instagram</a>
-          <a href="mailto:mixoidm@gmail.com">Mail</a>
+          <a href="https://www.instagram.com/mihajlo.mandusic/" aria-label="Instagram" title="Instagram">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <rect x="3" y="3" width="18" height="18" rx="5" />
+              <circle cx="12" cy="12" r="4" />
+              <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+            </svg>
+          </a>
+          <a href="mailto:mixoidm@gmail.com" aria-label="Email Mihajlo Mandušić" title="Email Mihajlo Mandušić">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="m3 6 9 7 9-7" />
+            </svg>
+          </a>
         </nav>
       </header>
       <main id="gallery">
@@ -105,14 +116,14 @@ export default function App() {
               <li key={photo.src}>
                 <button className="photo-button" aria-label={`Open photo ${index + 1}: ${photo.alt}`}
                   onClick={(event) => { event.currentTarget.focus(); setActiveIndex(index) }}>
-                  <PhotoImage photo={photo} eager={index < 2} />
+                  <PhotoImage photo={photo} eager={index < 3} />
                 </button>
               </li>
             ))}
           </ul>
         )}
       </main>
-      <footer className="site-footer">A collection of personal & travel photographs.</footer>
+      <footer className="site-footer">© Mihajlo Mandušić 2027</footer>
       {activeIndex !== null && <PhotoViewer initialIndex={activeIndex} onClose={() => setActiveIndex(null)} />}
     </>
   )

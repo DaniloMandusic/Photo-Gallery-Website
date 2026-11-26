@@ -123,3 +123,17 @@ Verification: `npm.cmd run lint` and `npm.cmd run build` passed after correcting
 Per user direction, the local demo now uses a black background, light typography, two columns (one on phones), and consistent 3:2 landscape frames. Images fit without cropping or distortion. Existing horizontal photos lead the static array. Fullscreen viewing retains original proportions. Lint/build passed; browser rendering remains unverified. This supersedes the initial white, variable-height grid design.
 
 Header update (2026-11-25): the portfolio header and browser title now use Mihajlo Mandušić. Right-aligned contact links open the supplied Instagram profile and a new email to mixoidm@gmail.com; links wrap on small screens and include visible keyboard focus. Frontend lint/build passed; browser rendering remains unverified.
+
+### 2026-11-26 - Filled gallery tiles
+
+Gallery previews now use centered cover cropping to fill the existing 3:2 landscape tiles without empty borders. This supersedes the previous contained-thumbnail treatment. Fullscreen images remain contained and uncropped; original image files are unchanged. Frontend lint/build passed; visual browser verification was not performed.
+
+Header alignment (2026-11-26): centered the name independently of the right-aligned contact links. On phones, the centered name occupies its own row above the links. Lint/build passed; browser rendering not verified.
+
+Header typography (2026-11-26): enlarged the centered name to a responsive 32-56px size with a modern system sans-serif stack, semibold weight, and tighter letter spacing. No font download is required. Lint/build passed; visual browser verification remains pending.
+
+Header typography refinement (2026-11-26): replaced the semibold sans-serif name with a regular-weight Baskerville/Palatino serif stack and more relaxed letter spacing for a lighter, editorial appearance. Responsive size and centering are retained. Uses installed fonts with Georgia fallback. Lint/build passed; visual browser verification remains pending.
+
+Contact icons (2026-11-26): replaced Instagram and Mail text with lightweight inline SVG icons. Existing destinations are retained, including the mailto link. Links have accessible names, hover titles, visible keyboard focus, and 44px click targets. No dependencies added. Lint/build passed; browser appearance not verified.
+
+Gallery columns (2026-11-26): restored three photos per row on desktop, with two columns at 1000px and below and one at 600px and below. The first three images load eagerly. Cropped 3:2 tiles are retained. Lint/build passed; browser rendering not verified.

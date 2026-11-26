@@ -8,9 +8,9 @@ Demo photos live in `frontend/public/photos/`; their display and navigation orde
 
 ## Gallery demo
 
-The black portfolio uses two generous columns, switching to one at 600px and below. Every gallery frame is 3:2 landscape; images fit inside without cropping or distortion, with dark space around other aspect ratios. Horizontal demo photos lead the ordered collection. The fullscreen viewer shows the complete image. Open a photo with a click, Enter, or Space. The fullscreen viewer provides Previous/Next buttons and Left/Right arrow navigation, wrapping at either end. Close with Escape or Close. The dialog contains keyboard focus, returns focus to the selected photo, and locks/restores background scrolling.
+The black portfolio uses three columns on desktop, two at 1000px and below, and one at 600px and below. Every gallery frame is 3:2 landscape; images fill each tile with a centered crop, without distortion or empty borders. Horizontal demo photos lead the ordered collection. The fullscreen viewer shows the complete image. Open a photo with a click, Enter, or Space. The fullscreen viewer provides Previous/Next buttons and Left/Right arrow navigation, wrapping at either end. Close with Escape or Close. The dialog contains keyboard focus, returns focus to the selected photo, and locks/restores background scrolling.
 
-Fixed 3:2 frames reserve space while loading; the first two images load eagerly and later images load lazily. Failed images show a readable fallback in both the grid and viewer. An empty array displays an empty-gallery message. No animation is used, including for users who prefer reduced motion.
+Fixed 3:2 frames reserve space while loading; the first three images load eagerly and later images load lazily. Failed images show a readable fallback in both the grid and viewer. An empty array displays an empty-gallery message. No animation is used, including for users who prefer reduced motion.
 
 To add a demo photo, copy a JPEG into `frontend/public/photos/` and add its `/photos/filename.jpg` URL, descriptive alt text, and actual width/height to the typed array. Reorder array entries to change gallery order. These static assets are public: this demo has no drafts or private media handling.
 
