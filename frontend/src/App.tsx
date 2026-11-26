@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
-import { photos, type Photo } from './data/photos'
+import { albums, type Album, type PhotoVariant } from './data/albums'
 
-function PhotoImage({ photo, eager = false, viewer = false }: {
-  photo: Photo; eager?: boolean; viewer?: boolean
+function PhotoImage({ variant, alt, eager = false, viewer = false }: {
+  variant: PhotoVariant; alt: string; eager?: boolean; viewer?: boolean
 }) {
   const [status, setStatus] = useState<'loading' | 'loaded' | 'failed'>('loading')
   return (
     <span className={`photo-image ${viewer ? 'viewer-image' : ''}`} data-status={status}>
       {status === 'failed' ? (
-        <span className="image-message" role="status">Photo unavailable<span>{photo.alt}</span></span>
+        <span className="image-message" role="status">Photo unavailable<span>{alt}</span></span>
       ) : (
         <>
           {status === 'loading' && <span className="image-message">Loading photo…</span>}
-          <img src={photo.src} alt={photo.alt} width={photo.width} height={photo.height}
+          <img src={variant.src} alt={alt} width={variant.width} height={variant.height}
             loading={eager ? 'eager' : 'lazy'} decoding="async"
             onLoad={() => setStatus('loaded')} onError={() => setStatus('failed')} />
         </>
@@ -21,11 +21,24 @@ function PhotoImage({ photo, eager = false, viewer = false }: {
   )
 }
 
-function PhotoViewer({ initialIndex, onClose }: { initialIndex: number; onClose: () => void }) {
-  const [index, setIndex] = useState(initialIndex)
+function PhotoViewer({ album, onClose }: { album: Album; onClose: () => void }) {
+  const [index, setIndex] = useState(0)
   const dialogRef = useRef<HTMLDialogElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
+  const thumbnailRef = useRef<HTMLDivElement>(null)
+  const focusSelectedThumbnail = useRef(false)
+  const photos = album.photos
   const photo = photos[index]
+  const windowStart = Math.max(0, Math.min(index - 2, photos.length - 5))
+  const nearbyPhotos = photos.slice(windowStart, windowStart + 5)
+
+  useEffect(() => {
+    // Arrow navigation can remove the focused thumbnail from the nearby window.
+    if (focusSelectedThumbnail.current) {
+      thumbnailRef.current?.querySelector<HTMLButtonElement>('[aria-current="true"]')?.focus()
+      focusSelectedThumbnail.current = false
+    }
+  }, [index])
 
   useEffect(() => {
     const dialog = dialogRef.current!
@@ -48,11 +61,12 @@ function PhotoViewer({ initialIndex, onClose }: { initialIndex: number; onClose:
   }, [])
 
   function navigate(direction: number) {
+    focusSelectedThumbnail.current = thumbnailRef.current?.contains(document.activeElement) ?? false
     setIndex((current) => (current + direction + photos.length) % photos.length)
   }
 
   return (
-    <dialog ref={dialogRef} className="viewer" aria-label="Photo viewer"
+    <dialog ref={dialogRef} className="viewer" aria-label={`${album.title} photo viewer`}
       onCancel={(event) => { event.preventDefault(); onClose() }}
       onKeyDown={(event) => {
         if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
@@ -72,10 +86,25 @@ function PhotoViewer({ initialIndex, onClose }: { initialIndex: number; onClose:
         }
       }}>
       <div className="viewer-topbar">
-        <span>Selected photographs</span>
+        <span>{album.title}</span>
         <button ref={closeRef} onClick={onClose} aria-label="Close photo viewer">Close <span aria-hidden="true">×</span></button>
       </div>
-      <PhotoImage key={photo.src} photo={photo} eager viewer />
+      <div className="viewer-content">
+        <PhotoImage key={photo.viewer.src} variant={photo.viewer} alt={photo.alt} eager viewer />
+        <div ref={thumbnailRef} className="viewer-thumbnails" role="group" aria-label="Nearby photos">
+          {nearbyPhotos.map((nearbyPhoto, offset) => {
+            const photoIndex = windowStart + offset
+            return (
+              <button key={nearbyPhoto.id} className="thumbnail-button"
+                aria-label={`View photo ${photoIndex + 1} of ${photos.length}: ${nearbyPhoto.alt}`}
+                aria-current={photoIndex === index ? 'true' : undefined}
+                onClick={() => setIndex(photoIndex)}>
+                <PhotoImage key={nearbyPhoto.thumbnail.src} variant={nearbyPhoto.thumbnail} alt={nearbyPhoto.alt} eager />
+              </button>
+            )
+          })}
+        </div>
+      </div>
       <div className="viewer-toolbar">
         <button onClick={() => navigate(-1)} disabled={photos.length < 2} aria-label="Previous photo">Previous</button>
         <p role="status" aria-atomic="true"><span>{index + 1} / {photos.length}</span><span className="viewer-caption">{photo.alt}</span></p>
@@ -86,7 +115,9 @@ function PhotoViewer({ initialIndex, onClose }: { initialIndex: number; onClose:
 }
 
 export default function App() {
-  const [activeIndex, setActiveIndex] = useState<number | null>(null)
+  const [activeAlbumId, setActiveAlbumId] = useState<string | null>(null)
+  const visibleAlbums = albums.filter((album) => album.photos.length > 0)
+  const activeAlbum = visibleAlbums.find((album) => album.id === activeAlbumId)
   return (
     <>
       <header className="site-header">
@@ -108,15 +139,15 @@ export default function App() {
         </nav>
       </header>
       <main id="gallery">
-        {photos.length === 0 ? (
-          <div className="empty-gallery"><h2>No photographs yet</h2><p>New photographs will appear here.</p></div>
+        {visibleAlbums.length === 0 ? (
+          <div className="empty-gallery"><h2>No albums yet</h2><p>New photo series will appear here.</p></div>
         ) : (
-          <ul className="gallery" aria-label="Selected photographs">
-            {photos.map((photo, index) => (
-              <li key={photo.src}>
-                <button className="photo-button" aria-label={`Open photo ${index + 1}: ${photo.alt}`}
-                  onClick={(event) => { event.currentTarget.focus(); setActiveIndex(index) }}>
-                  <PhotoImage photo={photo} eager={index < 3} />
+          <ul className="gallery" aria-label="Photo albums">
+            {visibleAlbums.map((album, index) => (
+              <li key={album.id}>
+                <button className="photo-button" aria-label={`Open album: ${album.title}`} aria-haspopup="dialog"
+                  onClick={(event) => { event.currentTarget.focus(); setActiveAlbumId(album.id) }}>
+                  <PhotoImage key={album.photos[0].preview.src} variant={album.photos[0].preview} alt={album.photos[0].alt} eager={index < 3} />
                 </button>
               </li>
             ))}
@@ -124,7 +155,7 @@ export default function App() {
         )}
       </main>
       <footer className="site-footer">© Mihajlo Mandušić 2027</footer>
-      {activeIndex !== null && <PhotoViewer initialIndex={activeIndex} onClose={() => setActiveIndex(null)} />}
+      {activeAlbum && <PhotoViewer key={activeAlbum.id} album={activeAlbum} onClose={() => setActiveAlbumId(null)} />}
     </>
   )
 }

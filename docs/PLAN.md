@@ -9,9 +9,9 @@ A photography portfolio with an owner-only CMS. The owner should be able to open
 - Complete: React/TypeScript/Vite scaffold and placeholder homepage.
 - Complete: FastAPI health endpoint and sample albums endpoint.
 - Complete: dependency files, Git ignore rules, setup documentation, and project guidance.
-- Implemented: local frontend gallery demo with eight static photos, responsive grid, native fullscreen dialog, wrapping navigation, keyboard/focus/scroll handling, and image loading/failure/empty states.
+- Implemented: local frontend album gallery with three sample series (15 photos), first-photo covers, album-local fullscreen navigation, up to five nearby thumbnails, responsive grid/strip, and image loading/failure/empty states.
 - Not implemented: frontend API connection, persistent data, authentication, uploads, CMS, or production public gallery with albums.
-- Current milestone: frontend-only gallery demo implementation complete; manual browser acceptance checks pending. See [the demo plan](../plans/frontend-gallery-demo.md).
+- Current milestone: frontend-only album gallery implementation complete; browser acceptance checks pending. See [the album gallery plan](../plans/album-gallery-plan.md), which supersedes the flat-gallery handover. Production gallery/CMS milestones remain incomplete.
 - The frontend API connection (milestone 1 below) is deferred until after the demo.
 
 ## MVP scope
@@ -23,7 +23,7 @@ Public website:
 
 Owner CMS:
 - One owner account with login and logout.
-- Create and edit albums, select covers, and reorder albums and photos.
+- Create and edit albums and reorder albums and photos. The first photo is always the cover.
 - Upload multiple photos with progress and understandable, retryable failures.
 - Edit captions and alternative text.
 - Preview drafts, publish, unpublish, and confirm deletions.
@@ -38,9 +38,10 @@ Confirmed:
 - Store image files separately from database metadata.
 - Protect editing operations and draft media on the backend.
 - For the local frontend demo only: store copied JPEGs in `frontend/public/photos/` and load them from an ordered static TypeScript array. No backend or database is required for this milestone; production storage remains undecided.
+- Album browsing decision (2026-11-26): show one cover per series on the homepage. The first ordered photo is the cover and the opening image; viewer navigation stays within that album. Nearby thumbnails appear vertically on desktop and horizontally at 600px and below. This is implemented for static samples; browser acceptance remains pending.
 
 Proposed starting point:
-- The initial demo opens directly to a photo gallery with a simple fullscreen viewer. Album/project navigation remains future scope.
+- The local demo opens directly to album covers and a series viewer. Production content and routing remain future scope.
 - An owner-only /admin area in the existing frontend.
 
 Still to decide:
@@ -64,7 +65,7 @@ Record decisions here as they are made; do not treat proposals as implemented fe
 ### 2. Define content and persistence
 
 - Choose database and migration tooling, and document the decisions.
-- Model albums (title, slug, description, cover, order, publication status), photos (storage reference, dimensions, alt text, caption, order, album), and site settings.
+- Model albums (title, slug, description, order, publication status), photos (storage reference, dimensions, alt text, caption, order, album), and site settings. Derive the cover from the first ordered photo.
 - Add migrations and meaningful API tests.
 - Ensure data survives a backend restart and public endpoints exclude drafts.
 - Keep write operations protected or unavailable publicly until owner authentication is implemented.
@@ -81,7 +82,7 @@ Record decisions here as they are made; do not treat proposals as implemented fe
 - Choose image storage and implement validated multi-photo uploads.
 - Generate appropriately sized display images and thumbnails.
 - Show upload progress and allow failed uploads to be retried without duplicate successful uploads.
-- Add cover selection, photo ordering, and publication controls.
+- Add photo ordering and publication controls; moving a photo first sets the cover.
 - Verify that the owner can sign in, create an album, upload three photos, and publish it to a basic public album page.
 - Verify that drafts remain private, including requests to image URLs.
 
@@ -110,6 +111,12 @@ Record decisions here as they are made; do not treat proposals as implemented fe
 
 ## Progress updates
 
+### 2026-11-26 - Album sample data prepared
+
+Prepared three static sample albums (15 photos) with 240px thumbnails, 960px previews, and 1920px viewer JPEGs (maximum long edges, no upscaling). Source images remain untouched. Generated variants normalize orientation and omit source metadata. Typed album data records IDs, alt text, ordered photos, and each variant's URL and dimensions. A reproducible Windows script and source selection manifest live in `scripts/`.
+
+This preparation preceded the album gallery implementation recorded below. The UI now consumes these albums; browser acceptance checks remain outstanding. Verification: 45 image files checked for references, dimensions, limits, and orientation metadata; thumbnail contact sheet inspected; frontend lint/build passed. See README.md for regeneration and loading guidance.
+
 When a milestone is completed, update its status and record verification results and any unresolved limitations here. Keep README.md aligned with the actual setup and available commands.
 
 ### 2026-11-25 — Local frontend gallery demo
@@ -137,3 +144,9 @@ Header typography refinement (2026-11-26): replaced the semibold sans-serif name
 Contact icons (2026-11-26): replaced Instagram and Mail text with lightweight inline SVG icons. Existing destinations are retained, including the mailto link. Links have accessible names, hover titles, visible keyboard focus, and 44px click targets. No dependencies added. Lint/build passed; browser appearance not verified.
 
 Gallery columns (2026-11-26): restored three photos per row on desktop, with two columns at 1000px and below and one at 600px and below. The first three images load eagerly. Cropped 3:2 tiles are retained. Lint/build passed; browser rendering not verified.
+
+### 2026-11-26 - Album cover gallery and series viewer
+
+Implemented the local frontend milestone: nonempty album covers in array order, first-photo opening on every visit, album-local wrapping controls/arrow keys, and up to five distinct nearby thumbnail buttons with a current marker. The thumbnail window clamps near the ends; keyboard navigation from a thumbnail restores focus to the selected thumbnail. Single-photo navigation is disabled. Covers use preview variants, the selected photograph uses its viewer variant, and the strip uses thumbnails. No adjacent full-size preloading, backend changes, dependencies, asset regeneration, or ignore-rule changes were introduced.
+
+Verification: frontend lint/build and diff whitespace checks passed. All 45 JPEG references, dimensions, size limits, and production copies were checked. Server-render assertions passed for ordered cover-only markup, no mounted viewer on the homepage, no albums, all-empty albums, mixed empty/nonempty albums, and one-/two-photo album covers. Fixtures were changed only in memory. Browser automation failed with a native-pipe connection error, so interaction, focus/scroll, desktop/tablet/375px/short-landscape appearance, throttled/cache-disabled network behavior, rapid navigation, browser console, and invalid-image recovery remain unverified. See the feature plan for the full browser checklist. This does not complete the production public gallery or CMS.

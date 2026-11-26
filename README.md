@@ -2,19 +2,43 @@
 
 A photography portfolio built with React, TypeScript, and Vite on the frontend, and FastAPI on the backend.
 
-The homepage is a local frontend gallery demo with eight photographs, a responsive grid, and a fullscreen viewer. The sample albums API remains separate; API integration, uploads, CMS, and persistent storage are not implemented.
+The homepage is a local frontend album gallery with three sample series and a fullscreen viewer. The sample albums API remains separate; API integration, uploads, CMS, and persistent storage are not implemented. Only the Vite frontend server is needed.
 
-Demo photos live in `frontend/public/photos/`; their display and navigation order comes from `frontend/src/data/photos.ts`. See [the demo plan](plans/frontend-gallery-demo.md) for behavior and verification. Only the Vite frontend server is needed for this demo.
+## Album gallery demo
 
-## Gallery demo
+The black portfolio retains three columns on desktop, two at 1000px and below, and one at 600px and below. Each nonempty album has one cropped 3:2 cover without a visible title beneath it; its button retains an accessible album name. Album order comes from `frontend/src/data/albums.ts` and `sample-albums.json`; the first ordered photo is always the cover. Every opening, including reopening, starts at photo 1.
 
-The black portfolio uses three columns on desktop, two at 1000px and below, and one at 600px and below. Every gallery frame is 3:2 landscape; images fill each tile with a centered crop, without distortion or empty borders. Horizontal demo photos lead the ordered collection. The fullscreen viewer shows the complete image. Open a photo with a click, Enter, or Space. The fullscreen viewer provides Previous/Next buttons and Left/Right arrow navigation, wrapping at either end. Close with Escape or Close. The dialog contains keyboard focus, returns focus to the selected photo, and locks/restores background scrolling.
+Click, Enter, or Space opens a cover. Previous/Next and Left/Right wrap only within that album; one-photo albums disable Previous/Next. The viewer shows the album title, photo count, and complete uncropped image. Up to five distinct nearby thumbnails select photos, with the current photo marked. The strip is vertical on the right and horizontal below the image at 600px and below. Close or Escape dismisses the dialog, restores cover focus and scrolling. Tab cycles within the dialog; arrow navigation from a thumbnail moves focus to the newly selected thumbnail.
 
-Fixed 3:2 frames reserve space while loading; the first three images load eagerly and later images load lazily. Failed images show a readable fallback in both the grid and viewer. An empty array displays an empty-gallery message. No animation is used, including for users who prefer reduced motion.
+Cover previews reserve space, with the first three eager and later covers lazy. Only the open viewer renders its selected large image and nearby thumbnails; there is no adjacent full-size preloading. Each image has a loading state and readable failure fallback. Broken covers and thumbnails remain buttons; a failed large image does not prevent navigation. Empty albums are omitted; an all-empty collection shows an empty state. No animations or new dependencies were added.
 
-To add a demo photo, copy a JPEG into `frontend/public/photos/` and add its `/photos/filename.jpg` URL, descriptive alt text, and actual width/height to the typed array. Reorder array entries to change gallery order. These static assets are public: this demo has no drafts or private media handling.
+To change the local collection, edit the ordered albums and photos in the sample JSON, using descriptive alt text and actual dimensions for each variant. Reordering the first photo changes both cover and opening image. Static assets are public, with no drafts or private media handling. Data, images, scripts, and feature plans remain Git-ignored by the existing rules and may be absent in a fresh clone; provide these local artifacts before building. Existing samples require no original-source-drive access.
 
-Verification (2026-11-25): frontend lint and production build passed. All eight build-output JPEGs match the supplied files. Browser automation was unavailable (native pipe connection failed), so desktop/mobile rendering, keyboard/focus/scroll behavior, and interactive loading/failure/empty-state checks still need manual verification.
+See [the album gallery plan](plans/album-gallery-plan.md) for scope and outstanding browser checks; it supersedes the old flat-gallery handover.
+
+## Prepared album samples
+
+The UI uses 15 sample photos grouped into Mountains & Snow (6), Lakeside Walks (5), and City Visits (4). These are illustrative samples, not verified geographic series or claims about the owner's work.
+
+Images live under `frontend/public/photos/albums/<album-id>/`. Each photo has three JPEG variants, preserving its full proportions without upscaling:
+
+| Variant | Maximum long edge | Intended use |
+| --- | --- | --- |
+| `thumbnail` | 240px | Nearby viewer thumbnails |
+| `preview` | 960px | Homepage album cover |
+| `viewer` | 1920px | Fullscreen photograph |
+
+Each variant includes its URL and actual dimensions in the data. The homepage renders only cover previews; opening an album renders its selected viewer image and nearby thumbnails. Importing the metadata does not initiate image downloads. All files in `public` are public assets, including currently unused samples.
+
+The source selection and descriptive alternative text are recorded in `scripts/sample-album-sources.json`. Regenerate on Windows using the original photos folder:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-sample-albums.ps1 -SourceDirectory 'E:\Danilo\My Pictures\photos'
+```
+
+This uses built-in System.Drawing, normalizes EXIF orientation, and creates fresh JPEGs without source EXIF/GPS metadata. Original files are untouched. It overwrites the selected generated variants and JSON; edit the source manifest before regenerating to preserve intentional ordering or alt-text changes. No runtime dependency is added. The 45 generated files total approximately 8 MiB; all 15 thumbnails together are approximately 165 KiB.
+
+Verification (2026-11-26): lint and production build passed; all 45 JPEG paths, dimensions, size limits, and byte-for-byte copies in build output passed checks. Server-render checks confirmed three ordered cover previews with no viewer mounted, and no-album, all-empty, mixed-empty, one-photo, and two-photo grid cases using in-memory fixtures. Browser automation failed to connect to its native pipe. Interactive navigation, focus/scroll behavior, responsive appearance, browser console, throttled/cache-disabled requests, rapid navigation, and broken-image recovery still require browser verification. Server rendering does not verify those behaviors.
 
 ## Project structure
 
@@ -39,7 +63,7 @@ Open the repository root in VS Code so both the frontend and backend are availab
 
 Continue with one focused task after reviewing current progress:
 
-> Read AGENTS.md, README.md, docs/PLAN.md, and plans/frontend-gallery-demo.md. Complete the remaining manual browser checks for the gallery demo and record the results before starting another milestone.
+> Read AGENTS.md, README.md, docs/PLAN.md, and plans/album-gallery-plan.md. Complete the remaining browser acceptance checks for the album gallery and record the results before starting another milestone.
 
 Review the changes and create a Git checkpoint after each working milestone.
 

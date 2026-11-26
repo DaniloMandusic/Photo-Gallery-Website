@@ -47,6 +47,7 @@ Desktop.ini
 # Pictures
 public/
 frontend/src/data
+scripts/
 
 # Development plans and prompts
 plans/
