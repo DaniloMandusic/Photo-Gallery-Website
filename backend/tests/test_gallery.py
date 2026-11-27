@@ -83,7 +83,7 @@ class GalleryTests(unittest.TestCase):
             self.assertEqual(albums[0]["photos"][0]["id"], "first-a")
             self.assertEqual(client.get("/api/media/first-a/viewer").content, b"manual replacement")
         with connect(self.storage) as db:
-            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 1)
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 2)
             self.assertEqual(db.execute("SELECT count(*) FROM variants").fetchone()[0], 12)
 
     def test_missing_input_leaves_no_partial_collection(self) -> None:

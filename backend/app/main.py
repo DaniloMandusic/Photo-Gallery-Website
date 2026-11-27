@@ -7,6 +7,7 @@ from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import FileResponse
 
 from .storage import Storage, connect, media_path, migrate
+from .cms import UploadLimit, router
 
 
 def create_app(storage: Storage | None = None) -> FastAPI:
@@ -18,6 +19,8 @@ def create_app(storage: Storage | None = None) -> FastAPI:
         yield
 
     app = FastAPI(title="Photo Gallery API", lifespan=lifespan)
+    app.add_middleware(UploadLimit)
+    app.include_router(router(storage))
 
     @app.get("/api/health")
     def health() -> dict[str, str]:

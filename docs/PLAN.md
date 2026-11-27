@@ -11,8 +11,9 @@ A photography portfolio with an owner-only CMS. The owner should be able to open
 - Complete: dependency files, Git ignore rules, setup documentation, and project guidance.
 - Implemented: local frontend album gallery with three sample series (15 photos), first-photo covers, album-local fullscreen navigation, up to five nearby thumbnails, responsive grid/strip, and image loading/failure/empty states.
 - Implemented: frontend API connection, local SQLite metadata, persistent backend-managed JPEGs, versioned schema initialization, one-time sample importer, read-only published-content filtering, and gallery loading/error/Retry states.
-- Not implemented: authentication, uploads, CMS, site settings, or production hosting/routing.
-- Current milestone: local storage/API implementation complete; browser acceptance remains pending because both browser helpers failed to connect to their native pipe. See [the local storage/API plan](../plans/local-storage-api-plan.md). Broader CMS/launch milestones remain incomplete.
+- Implemented: minimal local `/admin` with complete JPEG album creation, creation-only photo ordering, immediate album ordering, and confirmed deletion. Write endpoints are unauthenticated by explicit user decision.
+- Not implemented: authentication, existing-album editing, saved drafts/publication controls, site settings, or production hosting/routing.
+- Current milestone: minimal local CMS implemented; backend/frontend/live persistence checks passed, with interactive browser acceptance blocked by unavailable native pipes. See [minimal CMS plan](../plans/minimal-cms-plan.md). Protected owner access and broader CMS/launch milestones remain incomplete.
 
 ## MVP scope
 
@@ -36,9 +37,9 @@ Postponed: multiple owner roles, visitor accounts, comments, payments, client pr
 Confirmed:
 - React, TypeScript, Vite, plain CSS, and FastAPI in one repository.
 - Store image files separately from database metadata.
-- Protect editing operations and draft media on the backend.
+- Retain backend draft/media privacy. Owner authorization is explicitly deferred for the local CMS milestone; unauthenticated writes must not be deployed as protected owner access.
 - Local storage decision (2026-11-27): SQLite via Python's standard library stores metadata; ordinary files under `backend/storage/media` store JPEG variants. Numbered SQL migrations use `PRAGMA user_version`. Environment variables can override the persistent local database/media paths. This supersedes frontend JSON and public album image storage; both servers are now required.
-- Local content maintenance is manual database/file editing. No HTTP writes, authentication, CMS, uploads, cloud, or hosting are included in this milestone. Initial sample import is explicit and never resets content on startup or rerun.
+- Local content maintenance now uses `/admin` for creation/deletion/album ordering. Initial sample import remains explicit and never resets content on startup or rerun. Authentication, cloud, and hosting are deferred.
 - Album browsing decision (2026-11-26): show one cover per series on the homepage. The first ordered photo is the cover and the opening image; viewer navigation stays within that album. Nearby thumbnails appear vertically on desktop and horizontally at 600px and below. This is implemented for static samples; browser acceptance remains pending.
 
 Proposed starting point:
@@ -48,7 +49,7 @@ Proposed starting point:
 Still to decide:
 - Production persistence/backup operations beyond the chosen local SQLite and numbered SQL migrations.
 - Owner authentication, initial account setup, and recovery approach.
-- Future hosted image storage, upload formats/limits, and processing; current local storage serves existing JPEG variants only.
+- Future hosted image storage and additional upload formats; local JPEG processing and limits are implemented (see README).
 - Hosting, production API routing, and backup/restore strategy.
 - Search indexing and per-album social-sharing previews, including whether prerendering or server rendering is needed.
 
@@ -73,7 +74,7 @@ Local album/photo/variant persistence implemented 2026-11-27. Site settings, add
 - Model albums (title, slug, description, order, publication status), photos (storage reference, dimensions, alt text, caption, order, album), and site settings. Derive the cover from the first ordered photo.
 - Add migrations and meaningful API tests.
 - Ensure data survives a backend restart and public endpoints exclude drafts.
-- Keep write operations protected or unavailable publicly until owner authentication is implemented.
+- Production write operations must be protected. Explicit local-only exception: the minimal CMS has unauthenticated writes while owner authorization is deferred.
 
 ### 3. Owner access and initial CMS
 
@@ -173,3 +174,18 @@ Verification: frontend lint/build and diff whitespace checks passed. All 45 JPEG
 Additional restart verification (2026-11-27): after stopping and starting the actual backend process, all album metadata/order matched the import input and all 45 HTTP image responses matched persistent files byte-for-byte through Vite. Documentation local links resolve. The obsolete ignored frontend/src/data/albums.ts module was removed, and lint/build passed again without it. Temporary verification servers were stopped.
 
 Type validation refinement (2026-11-27): added backend parameter/return annotations and replaced importer manual type checks with strict Pydantic sample models. Duplicate IDs and filesystem checks remain explicit. Python annotations alone do not enforce runtime types. Verified 12 backend tests passed, with the existing Windows symlink test skipped; new cases cover wrong types, missing fields, empty collections, invalid dimensions, and duplicate IDs. No frontend or storage migration changes were needed.
+
+
+### 2026-11-27 ? Minimal local CMS verification
+
+Implemented `/admin`, complete immediate JPEG album creation with creation-only photo ordering, confirmed deletion, and immediate album moves. The first photo remains cover/opening image. Public gallery component and styles are unchanged. Authentication and hosting are explicitly deferred; write endpoints are unauthenticated and must remain local. Existing-album editing, saved drafts, publication controls, captions editing, and broader CMS features remain unimplemented.
+
+Checks: 24 backend tests passed, with one existing Windows symlink-permission test skipped (25 total). Coverage includes real JPEG order/dimensions/orientation/metadata removal, count/byte/pixel/body limits including chunked requests, invalid images, processing/rename/transaction/commit failures, concurrent/repeated creation, deleted receipts, stale/invalid ordering, cleanup failures/retry/isolation, draft/staging privacy, and Windows ACL inheritance. One test run hit a transient Windows access-denied error on directory rename; creation returned a recoverable 503 with no published album, and the full rerun passed. This remains a possible retryable filesystem limitation. `pip check`, frontend lint/build, and whitespace checks passed.
+
+Live HTTP verification used a disposable copy of all 3 existing albums / 15 photos / 45 variants through Vite preview on isolated ports. Verified `/admin` serves, ordered three-photo creation appends immediately, duplicate retry returns the same album, moves persist across a confirmed backend process stop/restart, deletion removes only the test album, and old media URLs return 404. All 45 original media responses remained byte-identical. All 46 original storage file hashes were unchanged during the successful isolated run; verification servers were stopped.
+
+Verification incident: an initial readiness check accepted the already-running backend on port 8000. It added and deleted only the generated test album and shifted existing album positions. Removed its creation receipt and restored the existing album positions to 0/1/2; existing photos and variants were retained. Subsequent verification used separate ports, refused occupied ports, checked process liveness, and confirmed the backend was unreachable before restart. The running backend applied additive migration 002; no content reset or reimport occurred.
+
+Interactive browser acceptance remains blocked: both the browser tool and Windows Computer Use fallback returned a missing native-pipe connection error. Desktop/phone layout, selection/reordering controls, confirmation cancellation, keyboard/focus/scroll behavior, viewer navigation and first-photo reopening, and loading/error/retry interactions were not exercised in a browser. HTTP/tests do not substitute for those checks.
+
+Remaining operational limits: crash/failed-cleanup private orphans can require manual inspection; pending deletion cleanup persists in SQLite but must be retried by album ID after a page reload; local creation selections/request IDs do not survive reload; no upload resuming or percentage progress. See README for exact formats/limits and recovery details.

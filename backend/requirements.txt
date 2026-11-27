@@ -35,6 +35,7 @@ opentelemetry-sdk==1.45.2
 opentelemetry-semantic-conventions==0.66b2
 protobuf==7.36.2
 pydantic==2.14.4
+Pillow==13.0.0
 pydantic-extra-types==2.11.1
 pydantic-settings==2.16.3
 pydantic_core==2.50.5
