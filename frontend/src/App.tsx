@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { albums, type Album, type PhotoVariant } from './data/albums'
+import type { Album, PhotoVariant } from './albums'
 
 function PhotoImage({ variant, alt, eager = false, viewer = false }: {
   variant: PhotoVariant; alt: string; eager?: boolean; viewer?: boolean
@@ -115,6 +115,27 @@ function PhotoViewer({ album, onClose }: { album: Album; onClose: () => void }) 
 }
 
 export default function App() {
+  const [albums, setAlbums] = useState<Album[]>([])
+  const [status, setStatus] = useState<'loading' | 'loaded' | 'failed'>('loading')
+  const [attempt, setAttempt] = useState(0)
+  useEffect(() => {
+    const controller = new AbortController()
+    async function loadAlbums() {
+      try {
+        const response = await fetch('/api/albums', { signal: controller.signal, cache: 'no-store' })
+        if (!response.ok) throw new Error('Gallery request failed')
+        const data: Album[] = await response.json()
+        if (!controller.signal.aborted) {
+          setAlbums(data)
+          setStatus('loaded')
+        }
+      } catch {
+        if (!controller.signal.aborted) setStatus('failed')
+      }
+    }
+    void loadAlbums()
+    return () => controller.abort()
+  }, [attempt])
   const [activeAlbumId, setActiveAlbumId] = useState<string | null>(null)
   const visibleAlbums = albums.filter((album) => album.photos.length > 0)
   const activeAlbum = visibleAlbums.find((album) => album.id === activeAlbumId)
@@ -139,7 +160,14 @@ export default function App() {
         </nav>
       </header>
       <main id="gallery">
-        {visibleAlbums.length === 0 ? (
+        {status === 'loading' ? (
+          <div className="empty-gallery" role="status">Loading albums…</div>
+        ) : status === 'failed' ? (
+          <div className="empty-gallery">
+            <p role="alert">Could not load albums. Please try again.</p>
+            <button onClick={() => { setStatus('loading'); setAttempt((value) => value + 1) }}>Retry</button>
+          </div>
+        ) : visibleAlbums.length === 0 ? (
           <div className="empty-gallery"><h2>No albums yet</h2><p>New photo series will appear here.</p></div>
         ) : (
           <ul className="gallery" aria-label="Photo albums">

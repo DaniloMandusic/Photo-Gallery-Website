@@ -7,12 +7,12 @@ A photography portfolio with an owner-only CMS. The owner should be able to open
 ## Current status
 
 - Complete: React/TypeScript/Vite scaffold and placeholder homepage.
-- Complete: FastAPI health endpoint and sample albums endpoint.
+- Complete: FastAPI health endpoint; SQLite-backed published album and guarded media endpoints replace the sample endpoint.
 - Complete: dependency files, Git ignore rules, setup documentation, and project guidance.
 - Implemented: local frontend album gallery with three sample series (15 photos), first-photo covers, album-local fullscreen navigation, up to five nearby thumbnails, responsive grid/strip, and image loading/failure/empty states.
-- Not implemented: frontend API connection, persistent data, authentication, uploads, CMS, or production public gallery with albums.
-- Current milestone: frontend-only album gallery implementation complete; browser acceptance checks pending. See [the album gallery plan](../plans/album-gallery-plan.md), which supersedes the flat-gallery handover. Production gallery/CMS milestones remain incomplete.
-- The frontend API connection (milestone 1 below) is deferred until after the demo.
+- Implemented: frontend API connection, local SQLite metadata, persistent backend-managed JPEGs, versioned schema initialization, one-time sample importer, read-only published-content filtering, and gallery loading/error/Retry states.
+- Not implemented: authentication, uploads, CMS, site settings, or production hosting/routing.
+- Current milestone: local storage/API implementation complete; browser acceptance remains pending because both browser helpers failed to connect to their native pipe. See [the local storage/API plan](../plans/local-storage-api-plan.md). Broader CMS/launch milestones remain incomplete.
 
 ## MVP scope
 
@@ -37,7 +37,8 @@ Confirmed:
 - React, TypeScript, Vite, plain CSS, and FastAPI in one repository.
 - Store image files separately from database metadata.
 - Protect editing operations and draft media on the backend.
-- For the local frontend demo only: store copied JPEGs in `frontend/public/photos/` and load them from an ordered static TypeScript array. No backend or database is required for this milestone; production storage remains undecided.
+- Local storage decision (2026-11-27): SQLite via Python's standard library stores metadata; ordinary files under `backend/storage/media` store JPEG variants. Numbered SQL migrations use `PRAGMA user_version`. Environment variables can override the persistent local database/media paths. This supersedes frontend JSON and public album image storage; both servers are now required.
+- Local content maintenance is manual database/file editing. No HTTP writes, authentication, CMS, uploads, cloud, or hosting are included in this milestone. Initial sample import is explicit and never resets content on startup or rerun.
 - Album browsing decision (2026-11-26): show one cover per series on the homepage. The first ordered photo is the cover and the opening image; viewer navigation stays within that album. Nearby thumbnails appear vertically on desktop and horizontally at 600px and below. This is implemented for static samples; browser acceptance remains pending.
 
 Proposed starting point:
@@ -45,9 +46,9 @@ Proposed starting point:
 - An owner-only /admin area in the existing frontend.
 
 Still to decide:
-- Database and migration tooling.
+- Production persistence/backup operations beyond the chosen local SQLite and numbered SQL migrations.
 - Owner authentication, initial account setup, and recovery approach.
-- Image storage, supported formats, upload limits, and thumbnail processing.
+- Future hosted image storage, upload formats/limits, and processing; current local storage serves existing JPEG variants only.
 - Hosting, production API routing, and backup/restore strategy.
 - Search indexing and per-album social-sharing previews, including whether prerendering or server rendering is needed.
 
@@ -57,12 +58,16 @@ Record decisions here as they are made; do not treat proposals as implemented fe
 
 ### 1. Connect frontend and backend
 
+Implemented 2026-11-27; live proxy and frontend lint/build verified. Interactive browser acceptance remains pending.
+
 - Configure Vite to forward /api requests to FastAPI in development.
-- Display the sample album from /api/albums in React.
+- Display the published persisted albums from /api/albums in React.
 - Handle loading, success, empty, and error states, with retry on failure.
 - Verify the connection in the browser and pass frontend lint/build checks.
 
 ### 2. Define content and persistence
+
+Local album/photo/variant persistence implemented 2026-11-27. Site settings, additional descriptive fields, and production operations remain future work; this broader milestone is not fully complete.
 
 - Choose database and migration tooling, and document the decisions.
 - Model albums (title, slug, description, order, publication status), photos (storage reference, dimensions, alt text, caption, order, album), and site settings. Derive the cover from the first ordered photo.
@@ -111,6 +116,20 @@ Record decisions here as they are made; do not treat proposals as implemented fe
 
 ## Progress updates
 
+### 2026-11-27 - Fixed Windows media permissions
+
+Investigated live media 404s: the importer had staged files in an owner-only TemporaryDirectory, and renamed album files retained ACLs readable by the importing sandbox account but inaccessible to the user's backend account. Restored inherited permissions only on the imported albums directory and its children. Changed staging to an ordinary uniquely named directory inheriting the configured media root's permissions, preserving copy/hash checks and cleanup. Added a Windows ACL regression test. Backend verification: 13 tests passed, one existing symlink test skipped; all 45 media requests returned HTTP 200 from the user's running FastAPI server and Vite proxy. No frontend changes or content reimport were needed.
+
+### 2026-11-27 - Local storage and read-only gallery API
+
+Implemented SQLite albums/photos/variants with explicit order, publication state, foreign keys, versioned SQL migrations, and configurable persistent paths. Imported the existing 3 albums, 15 photos, and 45 JPEG variants with byte-for-byte verification, then removed only the verified frontend copies. Retained ignored JSON as historical import input. Runtime types, migrations, importer, and tests are in source locations that are not ignored.
+
+React now fetches FastAPI albums with abort-safe loading, empty, failure, and Retry states. Development and preview proxy `/api`, including media. Gallery/viewer CSS and navigation code remain unchanged. Public reads exclude unpublished albums, and media routes require a referenced variant of a published album with safe path resolution; no blanket static mount or HTTP writes exist. Fresh requests use no-store caching. Content changes need a page reload, not a frontend rebuild.
+
+Verification: 9 backend tests passed and one OS symlink-creation test skipped. Covered import reruns/failures, migrations, constraints, ordering/dimensions, exact media bytes, published filtering, missing files, traversal, read-only behavior, backend errors, and persistence/manual title/order/media changes across fresh application instances. Frontend lint/build and pip compatibility passed. All 45 real JPEG dimensions and pre-removal SHA-256 hashes matched. Live Vite proxy returned all 3 albums and 45 JPEGs; rebuilt output contains no migrated album images.
+
+Both browser automation entry points failed with an unavailable native pipe. Desktop/phone appearance, interactive viewer/keyboard/focus/scroll behavior, request timing/cache-disabled loading patterns, delayed gallery loading, downtime/Retry, and missing-image recovery remain browser acceptance work. See README for actual commands and maintenance/backup guidance. Authentication, uploads, CMS, hosting, site settings, and launch remain unimplemented.
+
 ### 2026-11-26 - Album sample data prepared
 
 Prepared three static sample albums (15 photos) with 240px thumbnails, 960px previews, and 1920px viewer JPEGs (maximum long edges, no upscaling). Source images remain untouched. Generated variants normalize orientation and omit source metadata. Typed album data records IDs, alt text, ordered photos, and each variant's URL and dimensions. A reproducible Windows script and source selection manifest live in `scripts/`.
@@ -150,3 +169,7 @@ Gallery columns (2026-11-26): restored three photos per row on desktop, with two
 Implemented the local frontend milestone: nonempty album covers in array order, first-photo opening on every visit, album-local wrapping controls/arrow keys, and up to five distinct nearby thumbnail buttons with a current marker. The thumbnail window clamps near the ends; keyboard navigation from a thumbnail restores focus to the selected thumbnail. Single-photo navigation is disabled. Covers use preview variants, the selected photograph uses its viewer variant, and the strip uses thumbnails. No adjacent full-size preloading, backend changes, dependencies, asset regeneration, or ignore-rule changes were introduced.
 
 Verification: frontend lint/build and diff whitespace checks passed. All 45 JPEG references, dimensions, size limits, and production copies were checked. Server-render assertions passed for ordered cover-only markup, no mounted viewer on the homepage, no albums, all-empty albums, mixed empty/nonempty albums, and one-/two-photo album covers. Fixtures were changed only in memory. Browser automation failed with a native-pipe connection error, so interaction, focus/scroll, desktop/tablet/375px/short-landscape appearance, throttled/cache-disabled network behavior, rapid navigation, browser console, and invalid-image recovery remain unverified. See the feature plan for the full browser checklist. This does not complete the production public gallery or CMS.
+
+Additional restart verification (2026-11-27): after stopping and starting the actual backend process, all album metadata/order matched the import input and all 45 HTTP image responses matched persistent files byte-for-byte through Vite. Documentation local links resolve. The obsolete ignored frontend/src/data/albums.ts module was removed, and lint/build passed again without it. Temporary verification servers were stopped.
+
+Type validation refinement (2026-11-27): added backend parameter/return annotations and replaced importer manual type checks with strict Pydantic sample models. Duplicate IDs and filesystem checks remain explicit. Python annotations alone do not enforce runtime types. Verified 12 backend tests passed, with the existing Windows symlink test skipped; new cases cover wrong types, missing fields, empty collections, invalid dimensions, and duplicate IDs. No frontend or storage migration changes were needed.

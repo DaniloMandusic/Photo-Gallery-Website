@@ -1,140 +1,122 @@
 # Photo Gallery
 
-A photography portfolio built with React, TypeScript, and Vite on the frontend, and FastAPI on the backend.
+A local photography portfolio using React, TypeScript, Vite, plain CSS, FastAPI, SQLite, and backend-managed JPEG files. Both local servers are required. Authentication, uploads, owner CMS, and hosting remain future work.
 
-The homepage is a local frontend album gallery with three sample series and a fullscreen viewer. The sample albums API remains separate; API integration, uploads, CMS, and persistent storage are not implemented. Only the Vite frontend server is needed.
+## Run locally
 
-## Album gallery demo
-
-The black portfolio retains three columns on desktop, two at 1000px and below, and one at 600px and below. Each nonempty album has one cropped 3:2 cover without a visible title beneath it; its button retains an accessible album name. Album order comes from `frontend/src/data/albums.ts` and `sample-albums.json`; the first ordered photo is always the cover. Every opening, including reopening, starts at photo 1.
-
-Click, Enter, or Space opens a cover. Previous/Next and Left/Right wrap only within that album; one-photo albums disable Previous/Next. The viewer shows the album title, photo count, and complete uncropped image. Up to five distinct nearby thumbnails select photos, with the current photo marked. The strip is vertical on the right and horizontal below the image at 600px and below. Close or Escape dismisses the dialog, restores cover focus and scrolling. Tab cycles within the dialog; arrow navigation from a thumbnail moves focus to the newly selected thumbnail.
-
-Cover previews reserve space, with the first three eager and later covers lazy. Only the open viewer renders its selected large image and nearby thumbnails; there is no adjacent full-size preloading. Each image has a loading state and readable failure fallback. Broken covers and thumbnails remain buttons; a failed large image does not prevent navigation. Empty albums are omitted; an all-empty collection shows an empty state. No animations or new dependencies were added.
-
-To change the local collection, edit the ordered albums and photos in the sample JSON, using descriptive alt text and actual dimensions for each variant. Reordering the first photo changes both cover and opening image. Static assets are public, with no drafts or private media handling. Data, images, scripts, and feature plans remain Git-ignored by the existing rules and may be absent in a fresh clone; provide these local artifacts before building. Existing samples require no original-source-drive access.
-
-See [the album gallery plan](plans/album-gallery-plan.md) for scope and outstanding browser checks; it supersedes the old flat-gallery handover.
-
-## Prepared album samples
-
-The UI uses 15 sample photos grouped into Mountains & Snow (6), Lakeside Walks (5), and City Visits (4). These are illustrative samples, not verified geographic series or claims about the owner's work.
-
-Images live under `frontend/public/photos/albums/<album-id>/`. Each photo has three JPEG variants, preserving its full proportions without upscaling:
-
-| Variant | Maximum long edge | Intended use |
-| --- | --- | --- |
-| `thumbnail` | 240px | Nearby viewer thumbnails |
-| `preview` | 960px | Homepage album cover |
-| `viewer` | 1920px | Fullscreen photograph |
-
-Each variant includes its URL and actual dimensions in the data. The homepage renders only cover previews; opening an album renders its selected viewer image and nearby thumbnails. Importing the metadata does not initiate image downloads. All files in `public` are public assets, including currently unused samples.
-
-The source selection and descriptive alternative text are recorded in `scripts/sample-album-sources.json`. Regenerate on Windows using the original photos folder:
+Prerequisites: Node.js 24 LTS (or compatible newer LTS), Python 3.12, Git. Commands use PowerShell from the repository root.
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-sample-albums.ps1 -SourceDirectory 'E:\Danilo\My Pictures\photos'
-```
+# Initial dependency installation
+npm.cmd ci --prefix frontend
+py -3.12 -m venv backend/.venv
+& backend/.venv/Scripts/python.exe -m pip install -r backend/requirements.txt
 
-This uses built-in System.Drawing, normalizes EXIF orientation, and creates fresh JPEGs without source EXIF/GPS metadata. Original files are untouched. It overwrites the selected generated variants and JSON; edit the source manifest before regenerating to preserve intentional ordering or alt-text changes. No runtime dependency is added. The 45 generated files total approximately 8 MiB; all 15 thumbnails together are approximately 165 KiB.
+# Optional explicit schema initialization; startup also applies migrations
+& backend/.venv/Scripts/python.exe -m backend.app.storage
 
-Verification (2026-11-26): lint and production build passed; all 45 JPEG paths, dimensions, size limits, and byte-for-byte copies in build output passed checks. Server-render checks confirmed three ordered cover previews with no viewer mounted, and no-album, all-empty, mixed-empty, one-photo, and two-photo grid cases using in-memory fixtures. Browser automation failed to connect to its native pipe. Interactive navigation, focus/scroll behavior, responsive appearance, browser console, throttled/cache-disabled requests, rapid navigation, and broken-image recovery still require browser verification. Server rendering does not verify those behaviors.
+# Terminal 1: backend
+& backend/.venv/Scripts/python.exe -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
 
-## Project structure
-
-```text
-frontend/                 React application
-  src/App.tsx             Homepage component
-  src/index.css           Global styles
-  public/                 Public assets
-  package.json            Frontend dependencies and commands
-  package-lock.json       Locked frontend dependency versions
-backend/
-  app/main.py             FastAPI application and endpoints
-  requirements.txt        Pinned Python dependencies
-.gitignore                Ignore rules for local and generated files
-AGENTS.md                 Project guidance for Codex
-docs/PLAN.md              Scope, decisions, milestones, and progress
-```
-
-## Working with Codex
-
-Open the repository root in VS Code so both the frontend and backend are available. [AGENTS.md](AGENTS.md) defines coding conventions, including simple, clean code, and verification expectations. [The implementation plan](docs/PLAN.md) tracks scope, open decisions, and milestones.
-
-Continue with one focused task after reviewing current progress:
-
-> Read AGENTS.md, README.md, docs/PLAN.md, and plans/album-gallery-plan.md. Complete the remaining browser acceptance checks for the album gallery and record the results before starting another milestone.
-
-Review the changes and create a Git checkpoint after each working milestone.
-
-## Prerequisites
-
-- Node.js 24 LTS with npm, or a compatible newer LTS release.
-- Python 3.12 for the backend.
-- Git and VS Code.
-
-The commands below use Windows PowerShell and start from the repository root. Install the Python extension in VS Code for backend development. The official Codex extension by OpenAI can be used for coding assistance.
-
-## Frontend setup
-
-```powershell
+# Terminal 2: frontend
 cd frontend
-npm.cmd ci
 npm.cmd run dev
 ```
 
-Open the URL printed by Vite, usually http://localhost:5173. Keep the terminal running while developing; saved changes update in the browser. Press Ctrl+C to stop the server.
+Open the URL Vite prints (normally http://localhost:5173). Development and `npm.cmd run preview` proxy `/api`, including images, to `http://127.0.0.1:8000`. Production hosting/routing is not configured. No CORS configuration is needed for this local same-origin proxy.
 
-`npm.cmd ci` installs the versions recorded in `package-lock.json`. When intentionally adding or updating dependencies, use `npm.cmd install` and commit both dependency files.
+| Backend URL | Purpose |
+| --- | --- |
+| `/api/health` | `{"status":"ok"}` |
+| `/api/albums` | Ordered published albums and photo metadata; empty collection returns `[]` |
+| `/api/media/{photo_id}/{thumbnail,preview,viewer}` | Referenced JPEG of a published album |
+| `/docs` | API documentation |
 
-## Backend setup
+There are no HTTP write endpoints. Backend failures produce unsuccessful responses rather than empty collections. React displays loading, empty, and retryable error states without falling back to sample JSON.
 
-Open a second terminal at the repository root:
+## Persistent local storage
+
+Defaults are resolved relative to the backend source, independent of the working directory:
+
+- `backend/storage/gallery.sqlite3`: metadata, ordering, publication state, schema version, and initial-import marker.
+- `backend/storage/media/`: image files; imported samples are under `albums/<album-id>/`.
+
+These paths survive backend restarts and frontend builds and are Git-ignored. Optional `GALLERY_DATABASE` and `GALLERY_MEDIA_ROOT` environment variables override them; use absolute paths and set the same values in the importer and backend terminals. Relative overrides resolve against the process working directory. Environment variables are read directly; `.env` files are not automatically loaded by the application.
+
+SQLite uses Python's standard library, foreign keys, transactional numbered SQL migrations in `backend/app/migrations/`, and `PRAGMA user_version`. Startup applies pending migrations without seeding or resetting content. A newer unsupported database version fails startup.
+
+Media routes look up photo/variant records and their album publication status on every request. They reject missing records/files and unsafe paths, including resolved paths outside the media root. No directory or static storage mount exists. Album and successful media responses use `Cache-Control: no-store`, so fresh reads reflect changes and unpublishing. Already downloaded/displayed bytes cannot be revoked. Only local trusted manual maintenance may write the database or media directory.
+
+## Initial sample import
+
+The original collection contains Mountains & Snow (6 photos), Lakeside Walks (5), and City Visits (4). Each photo has thumbnail, preview, and viewer JPEG variants, with maximum long edges of 240, 960, and 1920 pixels (no upscaling). These are illustrative samples, not verified geographic series or claims about the owner's work.
+
+For an **unimported** local collection with the original JSON and prepared files available:
 
 ```powershell
-cd backend
-py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\fastapi.exe dev app/main.py
+& backend/.venv/Scripts/python.exe -m backend.app.import_samples --metadata frontend/src/data/sample-albums.json --source-public frontend/public
 ```
 
-These commands call the virtual environment directly, so PowerShell activation is not required. In VS Code, select `backend/.venv/Scripts/python.exe` through **Python: Select Interpreter**.
+The command validates JSON with strict typed Pydantic models (already installed with FastAPI), reporting field-specific errors without coercing invalid types. It also checks duplicate IDs, expected source paths, and JPEG inputs, stages and hash-checks copies, then inserts metadata in one transaction. Samples are imported as published. It requires an empty collection and refuses an existing destination `media/albums` directory. Missing inputs/copy failures do not commit a partial collection. A crash or commit failure after the directory rename can leave an orphan `media/albums`; inspect and move that directory aside before retrying against an empty database. Never remove a populated collection to force an import.
 
-The development server reloads when Python files change. Press Ctrl+C to stop it.
+A successful import records a durable marker. Every later run reports already imported and leaves all data/files unchanged, even if source inputs are gone. It is not a synchronization, repair, or content-update tool.
 
-| URL | Purpose |
-| --- | --- |
-| http://127.0.0.1:8000/api/health | Health check returning `{"status":"ok"}` |
-| http://127.0.0.1:8000/api/albums | One sample album with an empty photo list |
-| http://127.0.0.1:8000/docs | Interactive API documentation |
+This workspace has already imported all 3 albums, 15 photos, and 45 variants. After verifying source/destination SHA-256 hashes, the 45 frontend copies were removed. The JSON remains an ignored historical import input; neither it nor `frontend/src/data/albums.ts` is a runtime dependency. All required frontend types, importer, migrations, and tests live in tracked source locations.
 
-For later sessions, run `npm.cmd run dev` from `frontend` and `.\.venv\Scripts\fastapi.exe dev app/main.py` from `backend` in separate terminals. Installation is only needed initially or when dependencies change.
+The existing ignore rules also exclude sample inputs, scripts, and feature plans. A fresh clone starts with an empty gallery unless supplied with a database/media backup or the original import inputs. Do not regenerate images for ordinary startup or rerun the legacy preparation script into `frontend/public`: that would reintroduce public static copies. Original source photos were not accessed or changed.
 
-## Checks and production build
+## Manual maintenance and backups
 
-From `frontend`:
+On Windows, imported files inherit the media directory's permissions so the account running FastAPI can read them. The importer uses an ordinary staging directory: Python's owner-only temporary-directory permissions can otherwise survive a rename and cause media 404 responses under a different account. The initial workspace import's permissions were repaired on 2026-11-27; all 45 media URLs then returned HTTP 200 through both the running backend and Vite. A Windows ACL regression test covers future imports.
+
+Stop the backend before file moves, multi-step maintenance, or backups. Back up **both** the SQLite database and entire media directory together outside disposable build output. Restore both together and start the backend with the matching paths. Automated backups and a production restore procedure are future work.
+
+Use a SQLite editor with foreign keys enabled, or Python's built-in `sqlite3`. For example, from the repository root, update an album title/order without rebuilding React:
 
 ```powershell
+@"
+from backend.app.storage import Storage, connect
+with connect(Storage.from_environment()) as db:
+    db.execute('UPDATE albums SET title = ?, position = ? WHERE id = ?',
+               ('Mountains & Snow', 0, 'mountains-and-snow'))
+"@ | & backend/.venv/Scripts/python.exe -
+```
+
+- `albums`: stable `id`, `title`, nonnegative `position`, `published` (0 or 1; defaults to 0).
+- `photos`: globally unique stable `id`, `album_id`, `alt`, nonnegative `position`.
+- `variants`: `photo_id`, `role` (`thumbnail`, `preview`, `viewer`), unique relative `path` inside the media root, positive actual `width`/`height`. Supply all three roles for every photo. JPEGs only. Use lowercase hyphenated IDs as in the samples.
+- Album and photo ordering is `position`, then `id` for ties. The first ordered photo is always the cover and opening photo. Empty albums are omitted by the frontend.
+
+To add content manually, prepare the three JPEG files outside the frontend, create a draft album and related photo/variant rows in a transaction, verify paths/dimensions, then set `published = 1`. To unpublish, set it to 0. Keep paths relative with forward slashes; do not use symlinks, absolute paths, traversal, or the database file as media. There is no upload validation/processing pipeline or owner preview yet. Refresh the page after maintenance to fetch updated content; no frontend rebuild is required. The open viewer retains its fetched snapshot until reload.
+
+## Gallery behavior
+
+The existing black portfolio layout is preserved: three columns on desktop, two at 1000px and below, one at 600px and below. Covers are cropped 3:2 previews with accessible album names and no visible titles beneath them. Every opening starts at photo 1.
+
+Click, Enter, or Space opens a cover. Previous/Next and Left/Right wrap within that album; one-photo albums disable navigation. The fullscreen viewer shows the uncropped image, title, count, and up to five nearby thumbnails. Thumbnails are vertical on desktop and horizontal below the image on phones. Close/Escape restores cover focus and scrolling; Tab cycles within the dialog.
+
+Only cover previews are rendered on the homepage, with the first three eager and later covers lazy. Only the open viewer renders its selected large image and nearby thumbnails; no adjacent large-image preloading is added. Per-image loading/failure states remain available, and a failed image does not prevent navigation.
+
+## Checks and current verification
+
+```powershell
+# Repository root
+& backend/.venv/Scripts/python.exe -m unittest discover -s backend/tests -v
+& backend/.venv/Scripts/python.exe -m pip check
+git diff --check
+
+# frontend/
 npm.cmd run lint
 npm.cmd run build
 npm.cmd run preview
 ```
 
-The build checks TypeScript and writes production assets to `frontend/dist`. Preview serves that build locally; it is not a production hosting setup.
+Verified 2026-11-27: 9 backend tests passed; 1 symlink test skipped because Windows did not permit symlink creation. Tests use disposable storage and cover ordering, byte responses, import reruns/failures, migrations, constraints, draft/media filtering, read-only routes, traversal, missing files, backend failures, and persistence across fresh application connections. A manual title/order edit and replacement media survive migration/import reruns and appear through a fresh API application without rebuilding the frontend. Lint, production build, dependency compatibility, and diff whitespace checks passed.
 
-From `backend`, check installed dependency compatibility:
+Real-data checks: exactly 3 albums/15 photos/45 variants imported; all 45 source/destination hashes and actual JPEG dimensions verified; repeat import left content unchanged; all 45 images served successfully through the live Vite/FastAPI proxy; migrated album images absent from frontend public assets and rebuilt output.
 
-```powershell
-.\.venv\Scripts\python.exe -m pip check
-```
+Browser automation and its Windows fallback both failed to connect to the native pipe. Desktop/phone visual checks, all-album viewer navigation, keyboard/focus/scroll behavior, reopen-at-first-photo, cache-disabled request patterns, delayed loading, downtime/Retry recovery, and missing-image recovery remain unverified in a browser. Source preservation and HTTP/tests do not substitute for these checks.
 
-## Connecting the frontend and backend
+See [project guidance](AGENTS.md), [milestone status](docs/PLAN.md), and the local [feature plan](plans/local-storage-api-plan.md). Owner authentication, CMS, HTTP editing/uploads, image generation, cloud services, and hosting are not implemented.
 
-The Vite API proxy is not configured yet. Before fetching `/api/albums` from React, configure Vite to forward `/api` requests to `http://127.0.0.1:8000`. Production API routing must be configured separately when deploying.
-
-## Version control
-
-Commit source code, configuration, `frontend/package-lock.json`, and `backend/requirements.txt`. Dependencies, virtual environments, build output, caches, logs, and local `.env` files are ignored. Use `.env.example` for documented example settings without secrets.
-
-Header update (2026-11-25): the portfolio header and browser title now use Mihajlo Mandušić. Right-aligned contact links open the supplied Instagram profile and a new email to mixoidm@gmail.com; links wrap on small screens and include visible keyboard focus. Frontend lint/build passed; browser rendering remains unverified.
+Additional restart verification (2026-11-27): after stopping and starting the actual backend process, all album metadata/order matched the import input and all 45 HTTP image responses matched persistent files byte-for-byte through Vite. Documentation local links resolve. The obsolete ignored frontend/src/data/albums.ts module was removed, and lint/build passed again without it. Temporary verification servers were stopped.

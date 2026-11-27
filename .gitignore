@@ -51,3 +51,6 @@ scripts/
 
 # Development plans and prompts
 plans/
+
+# Persistent local gallery metadata and media
+backend/storage/
